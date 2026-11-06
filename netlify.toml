@@ -1,5 +1,5 @@
 [build]
-  command = "npm run build"
+  command = "npm ci && npx vite build"
   publish = "dist"
 
 [build.environment]
@@ -11,7 +11,6 @@
   status = 200
   force = true
 
-# Headers must be defined as an array of inline tables
 [[headers]]
   for = "/*"
   [headers.values]
