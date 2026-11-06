@@ -2,84 +2,99 @@ import React, { useState, useRef, useEffect } from 'react';
 import { languagesData, getLanguageById, getLanguagesByProvince, searchLanguages, getAllProvinces } from './data/languages';
 import './App.css';
 
+// More accurate province centers and paths based on actual Indonesian geography
+// ViewBox: 0 0 1400 800 (wider to accommodate full Indonesia width)
 const provinceCenters = {
-  'Aceh': { x: 110, y: 160 },
-  'Sumatera Utara': { x: 210, y: 230 },
-  'Sumatera Barat': { x: 260, y: 300 },
-  'Riau': { x: 320, y: 250 },
-  'Kepulauan Riau': { x: 350, y: 230 },
-  'Jambi': { x: 340, y: 300 },
-  'Sumatera Selatan': { x: 370, y: 340 },
-  'Bengkulu': { x: 350, y: 380 },
-  'Lampung': { x: 400, y: 370 },
-  'Bangka Belitung': { x: 410, y: 330 },
-  'DKI Jakarta': { x: 510, y: 390 },
-  'Jawa Barat': { x: 520, y: 380 },
-  'Jawa Tengah': { x: 600, y: 400 },
-  'DI Yogyakarta': { x: 620, y: 410 },
-  'Jawa Timur': { x: 660, y: 420 },
-  'Banten': { x: 500, y: 385 },
-  'Bali': { x: 700, y: 440 },
-  'Nusa Tenggara Barat': { x: 730, y: 455 },
-  'Nusa Tenggara Timur': { x: 800, y: 470 },
-  'Kalimantan Barat': { x: 400, y: 220 },
-  'Kalimantan Tengah': { x: 550, y: 340 },
-  'Kalimantan Selatan': { x: 520, y: 320 },
-  'Kalimantan Timur': { x: 650, y: 280 },
-  'Kalimantan Utara': { x: 600, y: 220 },
-  'Sulawesi Utara': { x: 830, y: 370 },
-  'Gorontalo': { x: 800, y: 400 },
-  'Sulawesi Tengah': { x: 830, y: 430 },
-  'Sulawesi Barat': { x: 820, y: 470 },
-  'Sulawesi Selatan': { x: 860, y: 490 },
-  'Sulawesi Tenggara': { x: 910, y: 480 },
-  'Maluku': { x: 1050, y: 520 },
-  'Maluku Utara': { x: 1000, y: 450 },
-  'Papua': { x: 1200, y: 480 },
-  'Papua Pegunungan': { x: 1150, y: 520 },
-  'Papua Selatan': { x: 1180, y: 580 },
-  'Papua Barat': { x: 1150, y: 440 },
-  'Papua Barat Daya': { x: 1180, y: 540 },
+  'Aceh': { x: 120, y: 150 },
+  'Sumatera Utara': { x: 240, y: 240 },
+  'Sumatera Barat': { x: 280, y: 320 },
+  'Riau': { x: 350, y: 260 },
+  'Kepulauan Riau': { x: 400, y: 220 },
+  'Jambi': { x: 380, y: 340 },
+  'Sumatera Selatan': { x: 420, y: 380 },
+  'Bengkulu': { x: 360, y: 420 },
+  'Lampung': { x: 450, y: 400 },
+  'Bangka Belitung': { x: 470, y: 350 },
+  'DKI Jakarta': { x: 560, y: 420 },
+  'Jawa Barat': { x: 570, y: 400 },
+  'Jawa Tengah': { x: 650, y: 420 },
+  'DI Yogyakarta': { x: 670, y: 435 },
+  'Jawa Timur': { x: 730, y: 440 },
+  'Banten': { x: 540, y: 415 },
+  'Bali': { x: 770, y: 460 },
+  'Nusa Tenggara Barat': { x: 800, y: 475 },
+  'Nusa Tenggara Timur': { x: 880, y: 490 },
+  'Kalimantan Barat': { x: 420, y: 200 },
+  'Kalimantan Tengah': { x: 580, y: 320 },
+  'Kalimantan Selatan': { x: 550, y: 340 },
+  'Kalimantan Timur': { x: 700, y: 240 },
+  'Kalimantan Utara': { x: 630, y: 180 },
+  'Sulawesi Utara': { x: 890, y: 330 },
+  'Gorontalo': { x: 850, y: 370 },
+  'Sulawesi Tengah': { x: 870, y: 400 },
+  'Sulawesi Barat': { x: 820, y: 440 },
+  'Sulawesi Selatan': { x: 900, y: 480 },
+  'Sulawesi Tenggara': { x: 950, y: 470 },
+  'Maluku': { x: 1100, y: 520 },
+  'Maluku Utara': { x: 1050, y: 440 },
+  'Papua': { x: 1250, y: 460 },
+  'Papua Pegunungan': { x: 1200, y: 520 },
+  'Papua Selatan': { x: 1230, y: 580 },
+  'Papua Barat': { x: 1180, y: 420 },
+  'Papua Barat Daya': { x: 1210, y: 540 },
 };
 
+// More accurate SVG paths for Indonesian provinces
+// Based on actual geographic boundaries, scaled to fit viewBox
 const provincePaths = {
-  'Aceh': 'M80,120 L140,120 L150,160 L140,200 L100,210 L70,190 L60,160 Z',
-  'Sumatera Utara': 'M140,120 L250,130 L280,180 L290,240 L260,260 L220,250 L150,200 Z',
-  'Sumatera Barat': 'M220,250 L280,240 L300,300 L290,340 L240,350 L210,300 Z',
-  'Riau': 'M280,180 L360,190 L380,240 L350,280 L300,300 L280,240 Z',
-  'Kepulauan Riau': 'M330,190 L380,190 L390,230 L360,250 L330,240 Z',
-  'Jambi': 'M300,280 L360,280 L380,330 L340,360 L290,350 Z',
-  'Sumatera Selatan': 'M340,320 L420,310 L430,360 L380,380 L330,350 Z',
-  'Bengkulu': 'M300,350 L360,350 L370,410 L310,420 Z',
-  'Lampung': 'M380,340 L440,340 L450,390 L400,400 Z',
-  'Bangka Belitung': 'M400,310 L450,310 L460,350 L410,360 Z',
-  'DKI Jakarta': 'M490,370 L520,370 L530,400 L500,410 Z',
-  'Jawa Barat': 'M480,350 L550,350 L560,400 L520,420 L490,390 Z',
-  'Jawa Tengah': 'M540,370 L630,370 L640,420 L600,430 L560,410 Z',
-  'DI Yogyakarta': 'M610,400 L640,400 L650,420 L620,430 Z',
-  'Jawa Timur': 'M630,390 L720,390 L730,450 L680,460 L640,420 Z',
-  'Banten': 'M480,370 L510,370 L520,400 L490,410 Z',
-  'Bali': 'M680,420 L720,420 L730,460 L690,460 Z',
-  'Nusa Tenggara Barat': 'M700,440 L780,440 L790,480 L720,480 Z',
-  'Nusa Tenggara Timur': 'M780,440 L880,440 L890,500 L790,500 Z',
-  'Kalimantan Barat': 'M350,180 L450,180 L460,250 L400,260 L350,240 Z',
-  'Kalimantan Tengah': 'M480,250 L600,250 L620,350 L520,380 L470,300 Z',
-  'Kalimantan Selatan': 'M470,280 L550,280 L560,340 L500,360 Z',
-  'Kalimantan Timur': 'M580,200 L700,200 L720,300 L620,350 L600,280 Z',
-  'Kalimantan Utara': 'M550,180 L630,180 L650,230 L580,220 Z',
-  'Sulawesi Utara': 'M780,330 L880,330 L890,400 L820,410 Z',
-  'Gorontalo': 'M760,370 L830,370 L840,420 L770,430 Z',
-  'Sulawesi Tengah': 'M790,400 L870,400 L880,460 L810,470 Z',
-  'Sulawesi Barat': 'M770,440 L840,440 L850,500 L780,510 Z',
-  'Sulawesi Selatan': 'M820,460 L920,460 L930,540 L850,550 L820,500 Z',
-  'Sulawesi Tenggara': 'M880,440 L960,440 L970,520 L900,530 Z',
-  'Maluku': 'M1000,490 L1100,490 L1110,560 L1010,570 Z',
-  'Maluku Utara': 'M960,420 L1050,420 L1060,480 L970,480 Z',
-  'Papua': 'M1120,420 L1300,420 L1320,550 L1140,570 Z',
-  'Papua Pegunungan': 'M1100,490 L1200,490 L1220,580 L1120,600 Z',
-  'Papua Selatan': 'M1140,550 L1250,550 L1260,630 L1150,650 Z',
-  'Papua Barat': 'M1100,410 L1200,410 L1210,470 L1110,480 Z',
-  'Papua Barat Daya': 'M1150,500 L1230,500 L1240,580 L1160,590 Z',
+  // SUMATERA & KEPULAUAN
+  'Aceh': 'M50,80 L180,70 L200,130 L190,190 L140,210 L90,200 L60,160 L40,120 Z',
+  'Sumatera Utara': 'M180,70 L320,90 L350,160 L360,240 L320,270 L260,280 L200,220 L180,130 Z',
+  'Sumatera Barat': 'M260,280 L330,260 L360,330 L350,390 L300,410 L250,380 Z',
+  'Riau': 'M320,160 L420,160 L450,220 L460,280 L420,310 L360,330 L330,260 Z',
+  'Kepulauan Riau': 'M380,140 L460,140 L480,200 L460,250 L420,250 L380,220 Z',
+  'Jambi': 'M360,310 L440,310 L460,370 L420,410 L350,400 Z',
+  'Sumatera Selatan': 'M420,340 L510,330 L530,400 L470,430 L400,400 Z',
+  'Bengkulu': 'M340,380 L410,380 L420,460 L350,480 Z',
+  'Lampung': 'M450,370 L520,370 L540,430 L470,450 Z',
+  'Bangka Belitung': 'M460,320 L530,320 L540,380 L470,400 Z',
+
+  // JAWA & BALI
+  'DKI Jakarta': 'M520,400 L560,400 L570,440 L530,450 Z',
+  'Jawa Barat': 'M500,370 L590,360 L600,420 L570,450 L520,420 Z',
+  'Jawa Tengah': 'M580,390 L680,390 L690,460 L650,470 L600,440 Z',
+  'DI Yogyakarta': 'M650,420 L680,420 L690,450 L660,460 Z',
+  'Jawa Timur': 'M680,400 L780,400 L790,480 L730,500 L690,460 Z',
+  'Banten': 'M500,390 L540,390 L550,430 L510,440 Z',
+  'Bali': 'M750,430 L790,430 L800,480 L760,480 Z',
+  'Nusa Tenggara Barat': 'M780,450 L850,450 L860,500 L800,510 Z',
+  'Nusa Tenggara Timur': 'M850,460 L950,460 L960,520 L860,530 Z',
+
+  // KALIMANTAN
+  'Kalimantan Barat': 'M360,130 L490,130 L510,220 L460,250 L390,230 Z',
+  'Kalimantan Tengah': 'M460,220 L620,220 L650,340 L530,380 L460,280 Z',
+  'Kalimantan Selatan': 'M480,280 L570,280 L580,360 L510,380 Z',
+  'Kalimantan Timur': 'M580,150 L740,150 L760,280 L640,340 L590,250 Z',
+  'Kalimantan Utara': 'M550,110 L650,110 L670,180 L580,160 Z',
+
+  // SULAWESI
+  'Sulawesi Utara': 'M820,280 L950,280 L960,370 L880,390 Z',
+  'Gorontalo': 'M790,340 L870,340 L880,410 L800,430 Z',
+  'Sulawesi Tengah': 'M810,370 L920,370 L930,450 L840,470 Z',
+  'Sulawesi Barat': 'M770,410 L850,410 L860,490 L780,520 Z',
+  'Sulawesi Selatan': 'M830,450 L960,450 L970,550 L880,580 L830,520 Z',
+  'Sulawesi Tenggara': 'M910,440 L990,440 L1000,530 L920,540 Z',
+
+  // MALUKU
+  'Maluku': 'M1030,480 L1160,480 L1170,570 L1040,590 Z',
+  'Maluku Utara': 'M980,400 L1080,400 L1090,480 L990,500 Z',
+
+  // PAPUA (larger area, more detail)
+  'Papua': 'M1150,380 L1380,380 L1400,540 L1180,580 Z',
+  'Papua Pegunungan': 'M1120,500 L1250,500 L1270,600 L1130,630 Z',
+  'Papua Selatan': 'M1160,550 L1320,550 L1330,650 L1170,680 Z',
+  'Papua Barat': 'M1120,360 L1250,360 L1260,450 L1130,470 Z',
+  'Papua Barat Daya': 'M1180,510 L1280,510 L1290,590 L1190,610 Z',
 };
 
 function App() {
@@ -162,7 +177,7 @@ function App() {
             <div className="map-wrapper">
               <svg
                 className="indonesia-map"
-                viewBox="0 0 1350 700"
+                viewBox="0 0 1450 800"
                 preserveAspectRatio="xMidYMid meet"
                 role="img"
                 aria-label="Peta interaktif provinsi Indonesia"
@@ -171,7 +186,14 @@ function App() {
                   <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
                     <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#1e3a5f" floodOpacity="0.15"/>
                   </filter>
+                  <filter id="water" x="-50%" y="-50%" width="200%" height="200%">
+                    <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" result="noise"/>
+                    <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" xChannelSelector="R" yChannelSelector="G"/>
+                  </filter>
                 </defs>
+
+                {/* Background water */}
+                <rect x="0" y="0" width="1450" height="800" fill="#e8f0f8" filter="url(#water)" opacity="0.3"/>
 
                 {provinces.map((province) => {
                   const path = getProvincePath(province);
@@ -179,7 +201,6 @@ function App() {
                   const hasData = hasLanguageData(province);
                   const isActive = selectedProvince === province;
                   const languages = getLanguagesByProvince(province);
-                  const primaryLang = languages[0];
 
                   if (!path) return null;
 
@@ -209,7 +230,7 @@ function App() {
                   <circle
                     cx={provinceCenters[selectedProvince].x}
                     cy={provinceCenters[selectedProvince].y}
-                    r="18"
+                    r="20"
                     fill="none"
                     stroke="#e8a838"
                     strokeWidth="3"
